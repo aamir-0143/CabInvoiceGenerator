@@ -87,5 +87,70 @@ namespace CabInvoiceGenerator
             }
             return Math.Max(totalFare, MINIMUM_FARE);
         }
+
+        ///<summary>
+        ///Function To Calculate Cotal Fare and Generating Summary For Multiple Rides.
+        /// </summary>
+        /// <param name="rides"></param>
+        /// <returns></returns>
+        public InvoiceSummary CalculateFare(Ride[] rides)
+        {
+            double totalfare = 0;
+            try
+            {
+                //Calculating Total Fare For All Rides.
+                foreach(Ride ride in rides)
+                {
+                    totalfare += this.CalculateFare(ride.distance, ride.time);
+                }
+            }
+            catch (CabInvoiceCustomException)
+            {
+                if(rides == null)
+                {
+                    throw new CabInvoiceCustomException(CabInvoiceCustomException.ExceptionType.NULL_RIDES, "Rides Are Null");
+                }
+            }
+            return new InvoiceSummary(rides.Length, totalfare);
+        }
+
+        ///<summary>
+        ///Function To Add Rides For UserId.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="rides"></param>
+        
+        public void AddRides(string userId, Ride[] rides)
+        {
+            try
+            {
+                //Adding Ride To The Specified User.
+                rideRepository.AddRide(userId, rides);
+            }
+            catch (CabInvoiceCustomException)
+            {
+                if(rides == null)
+                {
+                    throw new CabInvoiceCustomException(CabInvoiceCustomException.ExceptionType.NULL_RIDES, "Rides Are Null");
+                }
+            }
+        }
+        ///<summary>
+        ///Function to Get Summary By UserId.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        
+        public InvoiceSummary GetInvoiceSummary(string userId)
+        {
+            try
+            {
+                return this.CalculateFare(rideRepository.GetRides(userId));
+            }
+            catch (CabInvoiceCustomException)
+            {
+                throw new CabInvoiceCustomException(CabInvoiceCustomException.ExceptionType.INVALID_USER_ID, "Invalid UserID");
+            }
+        }
     }
 }
